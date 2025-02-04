@@ -20,20 +20,11 @@ final class AddEmployee extends EmployeeEvent {
   List<Object> get props => [employee];
 }
 
-final class UpdateEmployee extends EmployeeEvent {
-  final Employee employee;
-
-  const UpdateEmployee(this.employee);
-
-  @override
-  List<Object> get props => [employee];
-}
-
 final class DeleteEmployee extends EmployeeEvent {
-  final String employeeId;
+  final String id;
 
-  const DeleteEmployee(this.employeeId);
+  const DeleteEmployee(this.id);
 
   @override
-  List<Object> get props => [employeeId];
+  List<Object> get props => [id];
 }

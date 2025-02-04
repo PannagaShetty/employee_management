@@ -7,13 +7,13 @@ class AppColors {
 class AppTheme {
   static final ThemeData theme = ThemeData(
     useMaterial3: true,
+    fontFamily: 'Roboto',
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primaryColor,
     ),
-
-    // AppBar Theme
-    appBarTheme: const AppBarTheme(
-      centerTitle: true,
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppColors.primaryColor,
+      foregroundColor: Colors.white,
       elevation: 0,
     ),
 

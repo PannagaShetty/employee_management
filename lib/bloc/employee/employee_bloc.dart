@@ -1,15 +1,19 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../models/employee.dart';
+import '../../services/hive_service.dart';
 
 part 'employee_event.dart';
 part 'employee_state.dart';
 
 class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
-  EmployeeBloc() : super(const EmployeeInitial()) {
+  final HiveService _hiveService;
+
+  EmployeeBloc({required HiveService hiveService})
+      : _hiveService = hiveService,
+        super(const EmployeeInitial()) {
     on<LoadEmployees>(_onLoadEmployees);
     on<AddEmployee>(_onAddEmployee);
-    on<UpdateEmployee>(_onUpdateEmployee);
     on<DeleteEmployee>(_onDeleteEmployee);
   }
 
@@ -19,8 +23,8 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
   ) async {
     emit(const EmployeeLoading());
     try {
-      // TODO: Implement loading employees
-      emit(const EmployeeLoaded([]));
+      final employees = await _hiveService.getAllEmployees();
+      emit(EmployeeLoaded(employees));
     } catch (e) {
       emit(EmployeeError(e.toString()));
     }
@@ -33,25 +37,8 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     final state = this.state;
     if (state is EmployeeLoaded) {
       try {
-        final List<Employee> updatedEmployees = List.from(state.employees)
-          ..add(event.employee);
-        emit(EmployeeLoaded(updatedEmployees));
-      } catch (e) {
-        emit(EmployeeError(e.toString()));
-      }
-    }
-  }
-
-  Future<void> _onUpdateEmployee(
-    UpdateEmployee event,
-    Emitter<EmployeeState> emit,
-  ) async {
-    final state = this.state;
-    if (state is EmployeeLoaded) {
-      try {
-        final List<Employee> updatedEmployees = state.employees.map((employee) {
-          return employee.id == event.employee.id ? event.employee : employee;
-        }).toList();
+        await _hiveService.addEmployee(event.employee);
+        final updatedEmployees = await _hiveService.getAllEmployees();
         emit(EmployeeLoaded(updatedEmployees));
       } catch (e) {
         emit(EmployeeError(e.toString()));
@@ -63,16 +50,12 @@ class EmployeeBloc extends Bloc<EmployeeEvent, EmployeeState> {
     DeleteEmployee event,
     Emitter<EmployeeState> emit,
   ) async {
-    final state = this.state;
-    if (state is EmployeeLoaded) {
-      try {
-        final List<Employee> updatedEmployees = state.employees
-            .where((employee) => employee.id != event.employeeId)
-            .toList();
-        emit(EmployeeLoaded(updatedEmployees));
-      } catch (e) {
-        emit(EmployeeError(e.toString()));
-      }
+    try {
+      await _hiveService.deleteEmployee(event.id);
+      final employees = await _hiveService.getAllEmployees();
+      emit(EmployeeLoaded(employees));
+    } catch (e) {
+      emit(EmployeeError(e.toString()));
     }
   }
 }
