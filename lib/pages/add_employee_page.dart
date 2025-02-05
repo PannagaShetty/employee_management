@@ -1,7 +1,7 @@
-import 'package:employee_management/cubit/add_employee/add_employee_cubit.dart';
-import 'package:employee_management/cubit/add_employee/add_employee_state.dart';
 import 'package:employee_management/models/employee.dart';
+import 'package:employee_management/widgets/custom_button.dart';
 import 'package:employee_management/widgets/custom_snackbar.dart';
+import 'package:employee_management/bloc/add_employee/add_employee_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -17,13 +17,19 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
   final _nameController = TextEditingController();
 
   @override
+  void initState() {
+    context.read<AddEmployeeBloc>().add(UpdateStartDateEvent(DateTime.now()));
+    super.initState();
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
   }
 
   void _showRoleBottomSheet() {
-    final cubit = context.read<AddEmployeeCubit>();
+    final bloc = context.read<AddEmployeeBloc>();
     showModalBottomSheet(
       context: context,
       builder: (context) => ListView.separated(
@@ -37,7 +43,7 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
           return ListTile(
             title: Center(child: Text(role.toString())),
             onTap: () {
-              cubit.updateRole(role);
+              bloc.add(UpdateRoleEvent(role));
               Navigator.pop(context);
             },
           );
@@ -46,118 +52,154 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
     );
   }
 
-  Future<void> _selectDate(bool isStartDate) async {
+  Future<void> _selectDate(bool isStartDate, DateTime? initialDate,
+      AddEmployeeState state, BuildContext context) async {
     final today = DateTime.now();
-    final state = context.read<AddEmployeeCubit>().state;
+    final bloc = context.read<AddEmployeeBloc>();
+    bloc.add(UpdateTempDateEvent(initialDate));
 
-    final DateTime? picked = await showDialog<DateTime>(
+    await showDialog<DateTime>(
       context: context,
-      builder: (BuildContext context) {
-        return Dialog(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Quick select buttons
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: _quickSelectButton(
-                      isStartDate ? 'Today' : 'No date',
-                      isStartDate ? today : null,
-                    ),
-                  ),
-                  Expanded(
-                    child: _quickSelectButton(
-                      'Next Monday',
-                      _getNextWeekday(today, DateTime.monday),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: _quickSelectButton(
-                      'Next Tuesday',
-                      _getNextWeekday(today, DateTime.tuesday),
-                    ),
-                  ),
-                  Expanded(
-                    child: _quickSelectButton(
-                      'After 1 week',
-                      today.add(const Duration(days: 7)),
-                    ),
-                  ),
-                ],
-              ),
-              // Calendar
-              CalendarDatePicker(
-                initialDate: isStartDate ? today : (state.startDate ?? today),
-                firstDate:
-                    isStartDate ? DateTime(2000) : (state.startDate ?? today),
-                lastDate: DateTime(2100),
-                onDateChanged: (DateTime date) {
-                  Navigator.pop(context, date);
-                },
-                selectableDayPredicate: isStartDate
-                    ? null
-                    : (DateTime date) {
-                        return date.isAfter(state.startDate
-                                ?.subtract(const Duration(days: 1)) ??
-                            today);
-                      },
-              ),
-              // Bottom buttons
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+      builder: (BuildContext dialogContext) {
+        return BlocProvider.value(
+          value: bloc,
+          child: BlocBuilder<AddEmployeeBloc, AddEmployeeState>(
+            builder: (context, dialogState) {
+              final currentState = dialogState as AddEmployeeInitial;
+              return Dialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: _quickSelectButton(
+                            isStartDate ? 'Today' : 'No date',
+                            isStartDate ? today : null,
+                            currentState.tempSelectedDate,
+                          ),
+                        ),
+                        Expanded(
+                          child: _quickSelectButton(
+                            'Next Monday',
+                            _getNextWeekday(today, DateTime.monday),
+                            currentState.tempSelectedDate,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context, today),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        Expanded(
+                          child: _quickSelectButton(
+                            'Next Tuesday',
+                            _getNextWeekday(today, DateTime.tuesday),
+                            currentState.tempSelectedDate,
+                          ),
+                        ),
+                        Expanded(
+                          child: _quickSelectButton(
+                            'After 1 week',
+                            today.add(const Duration(days: 7)),
+                            currentState.tempSelectedDate,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 300,
+                      child: CalendarDatePicker(
+                        key: ValueKey(
+                            '${currentState.tempSelectedDate?.millisecondsSinceEpoch}'),
+                        initialDate: !isStartDate
+                            ? (currentState.tempSelectedDate ??
+                                        currentState.startDate!)
+                                    .isAfter(currentState.startDate!)
+                                ? currentState.tempSelectedDate ??
+                                    currentState.startDate!
+                                : currentState.startDate!
+                            : currentState.tempSelectedDate ?? today,
+                        firstDate: isStartDate
+                            ? DateTime(2000)
+                            : currentState.startDate!,
+                        lastDate: DateTime(2100),
+                        currentDate: currentState.tempSelectedDate ?? today,
+                        onDateChanged: (DateTime date) {
+                          bloc.add(UpdateTempDateEvent(date));
+                        },
+                        selectableDayPredicate: isStartDate
+                            ? null
+                            : (DateTime date) {
+                                return date.isAfter(currentState.startDate!
+                                    .subtract(const Duration(days: 1)));
+                              },
                       ),
-                      child: const Text('Save'),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          CustomButton(
+                            onPressed: () {
+                              bloc.add(ClearTempDateEvent());
+                              Navigator.pop(dialogContext);
+                            },
+                            text: 'Cancel',
+                            isPrimary: false,
+                          ),
+                          const SizedBox(width: 8),
+                          CustomButton(
+                            onPressed: () {
+                              final tempDate = currentState.tempSelectedDate;
+                              if (tempDate != null) {
+                                if (isStartDate) {
+                                  bloc.add(UpdateStartDateEvent(tempDate));
+                                } else {
+                                  bloc.add(UpdateEndDateEvent(tempDate));
+                                }
+                              }
+                              bloc.add(ClearTempDateEvent());
+                              Navigator.pop(dialogContext);
+                            },
+                            text: 'Save',
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
     );
-
-    if (picked != null) {
-      if (isStartDate) {
-        context.read<AddEmployeeCubit>().updateStartDate(picked);
-      } else {
-        context.read<AddEmployeeCubit>().updateEndDate(picked);
-      }
-    }
   }
 
-  Widget _quickSelectButton(String text, DateTime? date) {
+  Widget _quickSelectButton(
+      String text, DateTime? date, DateTime? initialDate) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.blue,
-          side: const BorderSide(color: Colors.blue),
-        ),
-        onPressed: () => Navigator.pop(context, date),
-        child: Text(text),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: CustomButton(
+        text: text,
+        onPressed: () {
+          context.read<AddEmployeeBloc>().add(UpdateTempDateEvent(date));
+        },
+        isPrimary: (initialDate != null &&
+                date?.year == initialDate.year &&
+                date?.month == initialDate.month &&
+                date?.day == initialDate.day) ||
+            (initialDate == null && date == null),
+        fixedSize: const Size(double.infinity, 44),
       ),
     );
   }
@@ -182,35 +224,30 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AddEmployeeCubit, AddEmployeeState>(
+    return BlocConsumer<AddEmployeeBloc, AddEmployeeState>(
       listener: (context, state) {
-        if (state.error != null) {
-          CustomSnackBar.show(
-            context,
-            message: state.error!,
-            isError: true,
-          );
-          context.read<AddEmployeeCubit>().resetError();
-        }
-        if (state.isSuccess) {
+        if (state is AddEmployeeSuccess) {
           CustomSnackBar.show(
             context,
             message: 'Employee added successfully',
-            actionLabel: 'UNDO',
-            onActionPressed: () {
-              // Handle undo action
-            },
           );
-          context.read<AddEmployeeCubit>().resetSuccess();
           Navigator.pop(context);
         }
       },
       builder: (context, state) {
+        final employeeState = state is AddEmployeeInitial
+            ? state
+            : AddEmployeeInitial(startDate: DateTime.now());
+
+        _nameController.text = employeeState.name ?? '';
+        _nameController.selection = TextSelection.fromPosition(
+          TextPosition(offset: employeeState.name?.length ?? 0),
+        );
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Add Employee Details'),
-            backgroundColor: Colors.blue,
-            foregroundColor: Colors.white,
+            automaticallyImplyLeading: false,
           ),
           body: Padding(
             padding: const EdgeInsets.all(16),
@@ -224,7 +261,9 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                         TextFormField(
                           controller: _nameController,
                           onChanged: (value) {
-                            context.read<AddEmployeeCubit>().updateName(value);
+                            context
+                                .read<AddEmployeeBloc>()
+                                .add(UpdateNameEvent(value));
                           },
                           decoration: const InputDecoration(
                             prefixIcon:
@@ -234,8 +273,6 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Role selection
                         TextFormField(
                           readOnly: true,
                           onTap: _showRoleBottomSheet,
@@ -245,7 +282,7 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                             border: const OutlineInputBorder(),
                             hintText: 'Select role',
                             suffixIcon: const Icon(Icons.arrow_drop_down),
-                            hintStyle: state.selectedRole == null
+                            hintStyle: employeeState.selectedRole == null
                                 ? Theme.of(context)
                                     .textTheme
                                     .bodyMedium
@@ -253,18 +290,22 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                                 : null,
                           ),
                           controller: TextEditingController(
-                            text: state.selectedRole?.toString() ?? '',
+                            text: employeeState.selectedRole?.toString() ?? '',
                           ),
                         ),
                         const SizedBox(height: 16),
-
-                        // Date selection
                         Row(
                           children: [
                             Expanded(
                               child: TextFormField(
                                 readOnly: true,
-                                onTap: () => _selectDate(true),
+                                onTap: () async {
+                                  await _selectDate(
+                                      true,
+                                      employeeState.startDate,
+                                      employeeState,
+                                      context);
+                                },
                                 decoration: const InputDecoration(
                                   prefixIcon: Icon(Icons.calendar_today,
                                       color: Colors.blue),
@@ -272,8 +313,8 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                                   hintText: 'Today',
                                 ),
                                 controller: TextEditingController(
-                                  text: state.startDate != null
-                                      ? _formatDate(state.startDate!)
+                                  text: employeeState.startDate != null
+                                      ? _formatDate(employeeState.startDate!)
                                       : 'Today',
                                 ),
                               ),
@@ -286,7 +327,13 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                             Expanded(
                               child: TextFormField(
                                 readOnly: true,
-                                onTap: () => _selectDate(false),
+                                onTap: () async {
+                                  await _selectDate(
+                                      false,
+                                      employeeState.endDate,
+                                      employeeState,
+                                      context);
+                                },
                                 decoration: const InputDecoration(
                                   prefixIcon: Icon(Icons.calendar_today,
                                       color: Colors.blue),
@@ -294,8 +341,8 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                                   hintText: 'No date',
                                 ),
                                 controller: TextEditingController(
-                                  text: state.endDate != null
-                                      ? _formatDate(state.endDate!)
+                                  text: employeeState.endDate != null
+                                      ? _formatDate(employeeState.endDate!)
                                       : 'No date',
                                 ),
                               ),
@@ -309,22 +356,21 @@ class _AddEmployeePageState extends State<AddEmployeePage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    TextButton(
+                    CustomButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
+                      text: 'Cancel',
+                      isPrimary: false,
                     ),
                     const SizedBox(width: 16),
-                    ElevatedButton(
+                    CustomButton(
                       onPressed: () {
                         if (_formKey.currentState!.validate()) {
-                          context.read<AddEmployeeCubit>().submitForm();
+                          context
+                              .read<AddEmployeeBloc>()
+                              .add(SubmitFormEvent());
                         }
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('Save'),
+                      text: 'Save',
                     ),
                   ],
                 ),

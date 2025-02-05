@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../bloc/employee/employee_bloc.dart';
-import '../cubit/add_employee/add_employee_cubit.dart';
-import '../services/hive_service.dart';
+import 'package:employee_management/bloc/employee/employee_bloc.dart';
+import 'package:employee_management/services/hive_service.dart';
 
 class AppBlocProvider extends StatelessWidget {
   final Widget child;
@@ -16,10 +15,10 @@ class AppBlocProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<EmployeeBloc>(
+        BlocProvider(
           create: (context) => EmployeeBloc(
             hiveService: HiveService(),
-          )..add(const LoadEmployees()),
+          )..add(LoadEmployees()),
         ),
       ],
       child: child,

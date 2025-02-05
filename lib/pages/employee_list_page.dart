@@ -1,5 +1,5 @@
+import 'package:employee_management/bloc/add_employee/add_employee_bloc.dart';
 import 'package:employee_management/bloc/employee/employee_bloc.dart';
-import 'package:employee_management/cubit/add_employee/add_employee_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -15,8 +15,8 @@ class EmployeeListPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Employee List',
-          style: TextStyle(color: Colors.white),
         ),
+        automaticallyImplyLeading: false,
       ),
       body: BlocBuilder<EmployeeBloc, EmployeeState>(
         builder: (context, state) {
@@ -77,9 +77,8 @@ class EmployeeListPage extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (context) => BlocProvider(
-                create: (context) => AddEmployeeCubit(
-                  employeeBloc:
-                      BlocProvider.of<EmployeeBloc>(context, listen: false),
+                create: (context) => AddEmployeeBloc(
+                  employeeBloc: context.read<EmployeeBloc>(),
                 ),
                 child: const AddEmployeePage(),
               ),

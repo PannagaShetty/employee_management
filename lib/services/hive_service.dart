@@ -1,5 +1,5 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import '../models/employee.dart';
+import 'package:employee_management/models/employee.dart';
 
 class HiveService {
   static const String employeeBox = 'employees';
@@ -7,11 +7,9 @@ class HiveService {
   static Future<void> init() async {
     await Hive.initFlutter();
 
-    // Register adapters
     Hive.registerAdapter(RoleAdapter());
     Hive.registerAdapter(EmployeeAdapter());
 
-    // Open boxes
     await Hive.openBox<Employee>(employeeBox);
   }
 

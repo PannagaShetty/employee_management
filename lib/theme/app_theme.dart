@@ -10,6 +10,9 @@ class AppTheme {
     fontFamily: 'Roboto',
     colorScheme: ColorScheme.fromSeed(
       seedColor: AppColors.primaryColor,
+      primary: AppColors.primaryColor,
+      onPrimary: Colors.white,
+      brightness: Brightness.light,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.primaryColor,
@@ -31,8 +34,6 @@ class AppTheme {
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     ),
-
-    // Button Theme
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         elevation: 0,
@@ -42,8 +43,6 @@ class AppTheme {
         ),
       ),
     ),
-
-    // Card Theme
     cardTheme: CardTheme(
       elevation: 0,
       shape: RoundedRectangleBorder(
