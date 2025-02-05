@@ -1,8 +1,10 @@
+import 'package:employee_management/bloc/employee/employee_bloc.dart';
+import 'package:employee_management/cubit/add_employee/add_employee_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import '../bloc/employee/employee_bloc.dart';
 import 'add_employee_page.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class EmployeeListPage extends StatelessWidget {
   const EmployeeListPage({super.key});
@@ -15,7 +17,6 @@ class EmployeeListPage extends StatelessWidget {
           'Employee List',
           style: TextStyle(color: Colors.white),
         ),
-        backgroundColor: Colors.blue,
       ),
       body: BlocBuilder<EmployeeBloc, EmployeeState>(
         builder: (context, state) {
@@ -75,7 +76,13 @@ class EmployeeListPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const AddEmployeePage(),
+              builder: (context) => BlocProvider(
+                create: (context) => AddEmployeeCubit(
+                  employeeBloc:
+                      BlocProvider.of<EmployeeBloc>(context, listen: false),
+                ),
+                child: const AddEmployeePage(),
+              ),
             ),
           );
         },
@@ -90,7 +97,7 @@ class EmployeeListPage extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Image.asset(
+          SvgPicture.asset(
             'assets/not_found.svg',
             width: 200,
             height: 200,

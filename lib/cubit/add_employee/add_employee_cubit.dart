@@ -1,7 +1,7 @@
+import 'package:employee_management/bloc/employee/employee_bloc.dart';
+import 'package:employee_management/models/employee.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
-import '../../models/employee.dart';
-import '../../bloc/employee/employee_bloc.dart';
 import 'add_employee_state.dart';
 
 class AddEmployeeCubit extends Cubit<AddEmployeeState> {

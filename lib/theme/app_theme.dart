@@ -14,10 +14,7 @@ class AppTheme {
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.primaryColor,
       foregroundColor: Colors.white,
-      elevation: 0,
     ),
-
-    // Input Decoration Theme
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: Colors.grey.shade50,

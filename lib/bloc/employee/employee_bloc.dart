@@ -1,7 +1,7 @@
+import 'package:employee_management/models/employee.dart';
+import 'package:employee_management/services/hive_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import '../../models/employee.dart';
-import '../../services/hive_service.dart';
 
 part 'employee_event.dart';
 part 'employee_state.dart';

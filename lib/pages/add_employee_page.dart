@@ -1,34 +1,18 @@
-import 'package:employee_management/bloc/employee/employee_bloc.dart';
+import 'package:employee_management/cubit/add_employee/add_employee_cubit.dart';
+import 'package:employee_management/cubit/add_employee/add_employee_state.dart';
+import 'package:employee_management/models/employee.dart';
+import 'package:employee_management/widgets/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../cubit/add_employee/add_employee_cubit.dart';
-import '../cubit/add_employee/add_employee_state.dart';
-import '../models/employee.dart';
-import '../widgets/custom_snackbar.dart';
 
-class AddEmployeePage extends StatelessWidget {
+class AddEmployeePage extends StatefulWidget {
   const AddEmployeePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AddEmployeeCubit(
-        employeeBloc: context.read<EmployeeBloc>(),
-      ),
-      // This ensures the cubit is disposed when the page is popped
-      child: const _AddEmployeeView(),
-    );
-  }
+  State<AddEmployeePage> createState() => _AddEmployeePageState();
 }
 
-class _AddEmployeeView extends StatefulWidget {
-  const _AddEmployeeView();
-
-  @override
-  State<_AddEmployeeView> createState() => _AddEmployeeViewState();
-}
-
-class _AddEmployeeViewState extends State<_AddEmployeeView> {
+class _AddEmployeePageState extends State<AddEmployeePage> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
 
@@ -39,17 +23,21 @@ class _AddEmployeeViewState extends State<_AddEmployeeView> {
   }
 
   void _showRoleBottomSheet() {
+    final cubit = context.read<AddEmployeeCubit>();
     showModalBottomSheet(
       context: context,
-      builder: (context) => ListView.builder(
+      builder: (context) => ListView.separated(
         shrinkWrap: true,
         itemCount: Role.values.length,
+        separatorBuilder: (context, index) => const Divider(
+          thickness: 0.5,
+        ),
         itemBuilder: (context, index) {
           final role = Role.values[index];
           return ListTile(
-            title: Text(role.toString()),
+            title: Center(child: Text(role.toString())),
             onTap: () {
-              context.read<AddEmployeeCubit>().updateRole(role);
+              cubit.updateRole(role);
               Navigator.pop(context);
             },
           );
